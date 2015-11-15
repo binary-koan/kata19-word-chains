@@ -1,7 +1,7 @@
 require "set"
 
 class WordChainer
-  DICTIONARY = File.read("wordlist.txt").chomp.split("\n")
+  DICTIONARY = Set.new(File.read("wordlist.txt").chomp.split("\n"))
 
   def initialize(initial, target)
     @initial = initial
@@ -10,47 +10,31 @@ class WordChainer
 
   def build_list
     list = [@initial]
-    used = Set.new
+    words_with_length = DICTIONARY.select { |w| w.length == @initial.length }
 
     until list.last == @target || list.size == 100
-      possibilities = words_similar_to(list.last)
-
-      new_word = nil
-      possibilities.each do |possibility|
-        if !used.include?(possibility) && closer_to_target?(list.last, possibility)
-          new_word = possibility
-          break
-        end
+      next_word = next_close_word(list.last)
+      if next_word
+        list.push(next_word)
+        next
       end
 
-      if used.include?(new_word)
-        list.pop
-      else
-        list.push(new_word || possibilities.sample)
-        used.add(list.last)
-      end
+      possibilities = words_with_length.select { |w| different_letters(w, list.last).size == 1 }
+      list.push(possibilities.sample)
     end
     list
   end
 
-  def words_similar_to(word)
-    words_with_length = DICTIONARY.select { |w|
-      w.length == word.length
-    }
-    words_with_length.select { |w| different_letters(w, word) == 1 }
+  def next_close_word(current)
+    current.length.times do |index|
+      next_word = current.dup
+      next_word[index] = @target[index]
+      return next_word if next_word != current && DICTIONARY.include?(next_word)
+    end
+    nil
   end
 
   def different_letters(word1, word2)
-    # BAD
-    w2chars = word2.chars
-    differences = 0
-    word1.chars.each.with_index do |char, i|
-      differences += 1 if char != w2chars[i]
-    end
-    differences
-  end
-
-  def closer_to_target?(current, possibility)
-    different_letters(@target, possibility) < different_letters(@target, current)
+    word1.chars.select.with_index { |char, i| char != word2[i] }
   end
 end
