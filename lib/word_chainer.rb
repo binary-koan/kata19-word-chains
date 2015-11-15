@@ -4,37 +4,52 @@ class WordChainer
   DICTIONARY = Set.new(File.read("wordlist.txt").chomp.split("\n"))
 
   def initialize(initial, target)
+    fail("Initial and target word must be the same length") unless initial.length == target.length
+
     @initial = initial
     @target = target
+    @possibilities = words_with_length(initial.length)
   end
 
   def build_list
     list = [@initial]
-    words_with_length = DICTIONARY.select { |w| w.length == @initial.length }
-
-    until list.last == @target || list.size == 100
-      next_word = next_close_word(list.last)
-      if next_word
-        list.push(next_word)
-        next
-      end
-
-      possibilities = words_with_length.select { |w| different_letters(w, list.last).size == 1 }
-      list.push(possibilities.sample)
-    end
+    list << next_word(list.last) until complete?(list)
     list
   end
 
-  def next_close_word(current)
-    current.length.times do |index|
-      next_word = current.dup
-      next_word[index] = @target[index]
-      return next_word if next_word != current && DICTIONARY.include?(next_word)
-    end
-    nil
+  private
+
+  def words_with_length(length)
+    DICTIONARY.select { |word| word.length == length }
   end
 
-  def different_letters(word1, word2)
-    word1.chars.select.with_index { |char, i| char != word2[i] }
+  def next_word(current)
+    next_close_word(current) || possible_next_words(current).sample
+  end
+
+  def next_close_word(current)
+    close_words(current).detect do |word|
+      word != current && DICTIONARY.include?(word)
+    end
+  end
+
+  def close_words(current)
+    current.length.times.map do |index|
+      word = current.dup
+      word[index] = @target[index]
+      word
+    end
+  end
+
+  def possible_next_words(current)
+    @possibilities.select { |w| one_letter_different?(w, current) }
+  end
+
+  def one_letter_different?(word1, word2)
+    word1.chars.select.with_index { |char, i| char != word2[i] }.size == 1
+  end
+
+  def complete?(list)
+    list.last == @target || list.size == 100
   end
 end
