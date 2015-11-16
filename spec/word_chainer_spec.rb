@@ -24,5 +24,18 @@ describe WordChainer do
         expect(list.last).to eq target
       end
     end
+
+    context "when the target can be discovered in two steps" do
+      let(:initial) { "bat" }
+      let(:target) { "cut" }
+
+      it "finds a three-element solution" do
+        expect(list.size).to eq 3
+      end
+
+      it "passes through one of the two possible options" do
+        expect(list[1]).to match(/but|cat/)
+      end
+    end
   end
 end

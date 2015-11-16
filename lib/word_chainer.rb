@@ -1,55 +1,64 @@
 require "set"
+require_relative "chain_node"
 
 class WordChainer
   DICTIONARY = Set.new(File.read("wordlist.txt").chomp.split("\n"))
 
   def initialize(initial, target)
-    fail("Initial and target word must be the same length") unless initial.length == target.length
-
-    @initial = initial
-    @target = target
-    @possibilities = words_with_length(initial.length)
+    @initial_node = ChainNode.new(nil,
+      word: initial,
+      target: target,
+      possibilities: possibilities_for_word(initial)
+    )
   end
 
   def build_list
-    list = [@initial]
-    list << next_word(list.last) until complete?(list)
-    list
+    @next_nodes = [@initial_node]
+    @seen_words = Set.new
+    process_next_node until finished?
+    generate_final_list
   end
 
   private
 
-  def words_with_length(length)
-    DICTIONARY.select { |word| word.length == length }
+  def possibilities_for_word(word)
+    DICTIONARY.select { |w| w.length == word.length }
   end
 
-  def next_word(current)
-    next_close_word(current) || possible_next_words(current).sample
-  end
+  def process_next_node
+    node = @next_nodes.first
 
-  def next_close_word(current)
-    close_words(current).detect do |word|
-      word != current && DICTIONARY.include?(word)
+    if @seen_words.include?(node.word)
+      @next_nodes.shift
+    elsif node.word != @initial_node.target
+      enqueue_children(node)
     end
   end
 
-  def close_words(current)
-    current.length.times.map do |index|
-      word = current.dup
-      word[index] = @target[index]
-      word
+  def enqueue_children(node)
+    node.children.each do |node|
+      next if @seen_words.include?(node.word)
+      @next_nodes.insert(index_for_node(node), node)
     end
   end
 
-  def possible_next_words(current)
-    @possibilities.select { |w| one_letter_different?(w, current) }
+  def generate_final_list
+    return if @next_nodes.empty?
+
+    node = @next_nodes.first
+    list = [node.word]
+    while (node = node.parent)
+      list.push(node.word)
+    end
+    list.reverse
   end
 
-  def one_letter_different?(word1, word2)
-    word1.chars.select.with_index { |char, i| char != word2[i] }.size == 1
+  def index_for_node(node)
+    index = @next_nodes.find_index { |el| el.heuristic >= node.heuristic }
+    index || @next_nodes.length - 1
   end
 
-  def complete?(list)
-    list.last == @target || list.size == 100
+  def finished?
+    @next_nodes.empty? || @next_nodes.first.word == @initial_node.target
   end
 end
