@@ -1,4 +1,4 @@
-require_relative "../lib/chain_node"
+require "spec_helper"
 
 describe ChainNode do
   let(:word) { "heap" }
@@ -6,15 +6,11 @@ describe ChainNode do
   let(:possibilities) { [] }
 
   subject(:node) do
-    ChainNode.new(nil,
-      word: word,
-      target: target,
-      possibilities: possibilities
-    )
+    ChainNode.new(nil, word, possibilities)
   end
 
   describe "#heuristic" do
-    subject { node.heuristic }
+    subject { node.heuristic(target) }
 
     context "when the word and target are equal" do
       let(:word) { "heap" }

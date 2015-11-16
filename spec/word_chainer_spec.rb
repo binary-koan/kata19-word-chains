@@ -1,4 +1,4 @@
-require_relative "../lib/word_chainer"
+require "spec_helper"
 
 describe WordChainer do
   let(:initial) { nil }
