@@ -1,40 +1,35 @@
 class ChainNode
   attr_reader :parent
   attr_reader :word
+  attr_reader :possible_children
 
-  def initialize(parent, word, possibilities)
+  def initialize(parent, word, possible_children)
     @parent = parent
     @word = word
-    @possibilities = possibilities
+    @possible_children = possible_children
   end
 
   def heuristic(target)
-    @word.length - difference_to(target)
+    different_chars(@word, target)
   end
 
   def children
-    to_children(@possibilities.select { |word| one_letter_different?(word, @word) })
+    child_words = possible_children.select { |other| one_letter_different?(word, other) }
+    child_words.map { |word| ChainNode.new(self, word, possible_children) }
   end
 
   def inspect
-    "<Node #{@word}->#{@target} from #{@parent.word}>"
+    "<Node #{word} from #{parent.word}>"
   end
 
   private
 
-  def to_children(words)
-    words.map do |word|
-      ChainNode.new(self, word, @possibilities)
-    end
+  def one_letter_different?(first_word, second_word)
+    different_chars(first_word, second_word) == 1
   end
 
-  def one_letter_different?(word1, word2)
-    word1.chars.select.with_index { |char, i| char != word2[i] }.size == 1
-  end
-
-  def difference_to(target)
-    @word.chars.select.with_index do |char, i|
-      target[i] == char
-    end.size
+  def different_chars(first_word, second_word)
+    combination = first_word.chars.zip(second_word.chars)
+    combination.count { |first_char, second_char| first_char != second_char }
   end
 end
