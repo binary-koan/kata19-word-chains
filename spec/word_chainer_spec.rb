@@ -37,5 +37,14 @@ describe WordChainer do
         expect(list[1]).to match(/but|cat/)
       end
     end
+
+    context "when the target cannot easily be discovered" do
+      let(:initial) { "house" }
+      let(:target) { "shout" }
+
+      it "finds a solution" do
+        expect(list).not_to be_nil
+      end
+    end
   end
 end

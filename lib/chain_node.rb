@@ -15,7 +15,7 @@ class ChainNode
   end
 
   def children
-    all_children
+    to_children(@possibilities.select { |word| one_letter_different?(word, @word) })
   end
 
   def inspect
@@ -24,10 +24,8 @@ class ChainNode
 
   private
 
-  def all_children
-    @possibilities.select do |word|
-      one_letter_different?(word, @word)
-    end.map do |word|
+  def to_children(words)
+    words.map do |word|
       ChainNode.new(self, word: word, target: @target, possibilities: @possibilities)
     end
   end

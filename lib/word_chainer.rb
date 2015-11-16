@@ -15,6 +15,7 @@ class WordChainer
   def build_list
     @next_nodes = [@initial_node]
     @seen_words = Set.new
+
     process_next_node until finished?
     generate_final_list
   end
@@ -28,9 +29,9 @@ class WordChainer
   def process_next_node
     node = @next_nodes.first
 
-    if @seen_words.include?(node.word)
+    unless node.word == @initial_node.target
       @next_nodes.shift
-    elsif node.word != @initial_node.target
+      @seen_words.add(node.word)
       enqueue_children(node)
     end
   end
