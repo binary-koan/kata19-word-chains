@@ -1,17 +1,15 @@
 class ChainNode
   attr_reader :parent
   attr_reader :word
-  attr_reader :target
 
-  def initialize(parent, word:, target:, possibilities:)
+  def initialize(parent, word, possibilities)
     @parent = parent
     @word = word
-    @target = target
     @possibilities = possibilities
   end
 
-  def heuristic
-    @word.length - distance_to_target
+  def heuristic(target)
+    @word.length - difference_to(target)
   end
 
   def children
@@ -26,7 +24,7 @@ class ChainNode
 
   def to_children(words)
     words.map do |word|
-      ChainNode.new(self, word: word, target: @target, possibilities: @possibilities)
+      ChainNode.new(self, word, @possibilities)
     end
   end
 
@@ -34,9 +32,9 @@ class ChainNode
     word1.chars.select.with_index { |char, i| char != word2[i] }.size == 1
   end
 
-  def distance_to_target
+  def difference_to(target)
     @word.chars.select.with_index do |char, i|
-      @target[i] == char
+      target[i] == char
     end.size
   end
 end

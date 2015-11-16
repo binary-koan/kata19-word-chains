@@ -4,16 +4,14 @@ require_relative "chain_node"
 class WordChainer
   DICTIONARY = Set.new(File.read("wordlist.txt").chomp.split("\n"))
 
-  def initialize(initial, target)
-    @initial_node = ChainNode.new(nil,
-      word: initial,
-      target: target,
-      possibilities: possibilities_for_word(initial)
-    )
+  def initialize(initial_word, target)
+    possibilities = possibilities_for_word(initial_word)
+    @initial_node = ChainNode.new(nil, initial_word, possibilities)
+    @target = target
   end
 
   def build_list
-    @next_nodes = [@initial_node]
+    @unseen_nodes = [@initial_node]
     @seen_words = Set.new
 
     process_next_node until finished?
@@ -27,10 +25,10 @@ class WordChainer
   end
 
   def process_next_node
-    node = @next_nodes.first
+    node = @unseen_nodes.first
 
-    unless node.word == @initial_node.target
-      @next_nodes.shift
+    unless node.word == @target
+      @unseen_nodes.shift
       @seen_words.add(node.word)
       enqueue_children(node)
     end
@@ -39,14 +37,14 @@ class WordChainer
   def enqueue_children(node)
     node.children.each do |node|
       next if @seen_words.include?(node.word)
-      @next_nodes.insert(index_for_node(node), node)
+      @unseen_nodes.insert(index_for_node(node), node)
     end
   end
 
   def generate_final_list
-    return if @next_nodes.empty?
+    return if @unseen_nodes.empty?
 
-    node = @next_nodes.first
+    node = @unseen_nodes.first
     list = [node.word]
     while (node = node.parent)
       list.push(node.word)
@@ -55,11 +53,13 @@ class WordChainer
   end
 
   def index_for_node(node)
-    index = @next_nodes.find_index { |el| el.heuristic >= node.heuristic }
-    index || @next_nodes.length - 1
+    index = @unseen_nodes.find_index do |el|
+      el.heuristic(@target) >= node.heuristic(@target)
+    end
+    index || @unseen_nodes.length - 1
   end
 
   def finished?
-    @next_nodes.empty? || @next_nodes.first.word == @initial_node.target
+    @unseen_nodes.empty? || @unseen_nodes.first.word == @target
   end
 end
